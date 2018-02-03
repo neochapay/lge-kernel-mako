@@ -41,6 +41,9 @@ static int has_48mhz_xo = WCNSS_CONFIG_UNSPECIFIED;
 module_param(has_48mhz_xo, int, S_IWUSR | S_IRUGO);
 MODULE_PARM_DESC(has_48mhz_xo, "Is an external 48 MHz XO present");
 
+static int wlan_smd_ready = 0;
+module_param(wlan_smd_ready, int, S_IWUSR | S_IRUGO);
+
 static DEFINE_SPINLOCK(reg_spinlock);
 
 #define MSM_RIVA_PHYS			0x03204000
@@ -359,8 +362,10 @@ EXPORT_SYMBOL(wcnss_flush_delayed_boot_votes);
 static int __devexit
 wcnss_wlan_ctrl_remove(struct platform_device *pdev)
 {
-	if (penv)
+	if (penv){
 		penv->smd_channel_ready = 0;
+		wlan_smd_ready = 0;
+	}
 
 	pr_info("%s: SMD ctrl channel down\n", __func__);
 
@@ -713,6 +718,7 @@ static void wcnssctrl_rx_handler(struct work_struct *worker)
 
 	case WCNSS_NVBIN_DNLD_RSP:
 		pr_info("wcnss: received WCNSS_NVBIN_DNLD_RSP from ccpu\n");
+		wlan_smd_ready = 1;
 		break;
 
 	default:
